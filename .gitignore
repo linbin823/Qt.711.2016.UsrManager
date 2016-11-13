@@ -1,0 +1,8 @@
+*.user
+*.user.*
+obj
+bin
+*.suo
+*build*
+*.bak
+*.tmp

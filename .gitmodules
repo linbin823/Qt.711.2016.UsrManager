@@ -1,0 +1,3 @@
+[submodule "lib/saveLoadProcessor"]
+	path = lib/saveLoadProcessor
+	url = https://github.com/linbin823/Qt.711.2016.saveLoadProcessor.git
