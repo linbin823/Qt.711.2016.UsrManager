@@ -14,10 +14,15 @@
 class UsrManager  : public QObject, public IUsrAuthorize, public IUsrManage
 {
     Q_OBJECT
-public:
+private:
     explicit UsrManager(QObject *parent = 0);
-    ~UsrManager();
+    //单例设计
+    static UsrManager* _singleton;
 
+public:
+    static UsrManager* getUsrManager();
+
+    ~UsrManager();
     //等级设计
     enum level: quint8{
         levelSuperior                    = 0xFF,      //工程权限

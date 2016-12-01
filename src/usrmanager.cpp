@@ -4,6 +4,15 @@
 
 #include "usrmanager.h"
 #include "loadsaveprocessorjson.h"
+UsrManager* UsrManager::_singleton = nullptr;
+
+UsrManager* UsrManager::getUsrManager(){
+    if(_singleton == nullptr){
+        _singleton = new UsrManager();
+    }
+    return _singleton;
+}
+
 /*
  * 构造函数
  * 输入参数：父QObject
