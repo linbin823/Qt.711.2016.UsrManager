@@ -6,7 +6,9 @@ SOURCES +=\
 
 HEADERS  +=\
     $$PWD/usrinfo.h \
-    $$PWD/usrmanager.h
+    $$PWD/usrmanager.h \
+    $$PWD/iusrmanage.h \
+    $$PWD/iusrauthorize.h
 
 INCLUDEPATH += $$PWD\
 

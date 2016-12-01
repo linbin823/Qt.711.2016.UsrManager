@@ -2,130 +2,152 @@
 #pragma execution_character_set("utf-8")
 #endif
 
-#include "tmpeer.h"
-
-tmPeer::tmPeer(QObject *parent) : baseDevice(parent)
+#include "usrinfo.h"
+/*
+ * 构造函数
+ * 输入参数：无
+ * 返回数值：无
+ * 功能描述：
+ * 1、初始化密码为空
+ * 2、设置密码
+ * 3、初始化名称
+ * 4、初始化等级
+ */
+UsrInfo::UsrInfo()
 {
-    QTime time = QTime::currentTime();
-    qsrand(time.msec());
-    setName( QString("default peer name %1").arg(qrand()) );
-    peerIp = 0;
-    priority = 0;
-    lastUpdateTime.start();
-    resetError(0xFFFFFFFFFFFFFFFF);
-    setState(stateDisable);
-
-    offlineDelay = 30 * 1000;       //default = 30sec
-    offlineCheckInterv = 1* 1000;   //default = 1sec
-
-    offlineCheckTimer.setSingleShot(false);
-    offlineCheckTimer.setInterval(offlineCheckInterv);
-    connect(&offlineCheckTimer,SIGNAL(timeout()),this,SLOT(offlineCheck()));
-    offlineCheckTimer.start();//一直都会检查超时
+    _salt = "8y*P%";
+    QByteArray initPswd = _salt.toLocal8Bit();
+    _pswd = QCryptographicHash::hash(initPswd, QCryptographicHash::Sha256);
+    _name = "undefined";
+    _level = 0;
 
 }
 
+/*
+ * 析构函数
+ * 输入参数：无
+ * 返回数值：无
+ * 功能描述：
+ */
+UsrInfo::~UsrInfo(){
 
-void tmPeer::setPeerPriority(quint32 pri){
-    if(pri<=0 ) return;
-    if(priority != pri){
-        priority = pri;
-        emit msgPriorityChanged(pri);
-        emit msgDeviceChanged(getName());
-        //qDebug()<<"newPriority"<<peerName<<pri;
-    }
 }
 
-void tmPeer::setPeerIp(quint32 ip){
-    if(ip<=0 ) return;
-    if(peerIp != ip){
-        peerIp = ip;
-        emit msgIpChanged(ip);
-        emit msgDeviceChanged(getName());
-        //qDebug()<<"newIp"<<peerName<<ip;
-    }
+/*
+ * 查询名称
+ * 输入参数：无
+ * 返回数值：用户名称
+ * 功能描述：
+ */
+QString UsrInfo::getName() const{
+    return _name;
 }
 
-quint32 tmPeer::getPeerPriority() const{
-    return priority;
-}
-quint32 tmPeer::getPeerIp() const{
-    return peerIp;
-}
-
-void tmPeer::update(const QString& name, quint64 state, quint64 error, quint32 pri, quint32 ip){
-    //qDebug()<<name<<state<<error<<pri<<ip;
-    setName(name);
-    setState(state);
-    setPeerPriority(pri);
-    setPeerIp(ip);
-    updateError(error);
-    lastUpdateTime.start();
+/*
+ * 查询等级
+ * 输入参数：无
+ * 返回数值：用户等级
+ * 功能描述：
+ */
+quint8 UsrInfo::getLevel() const{
+    return _level;
 }
 
-
-void tmPeer::update(){
-    lastUpdateTime.start();
-}
-
-//检查站offline
-void tmPeer::offlineCheck(){
-    if( lastUpdateTime.elapsed() >= offlineDelay ){
-        //set offline
-        if(getState() != stateOffline){
-            //qDebug()<<"setOffline";
-            setState(stateOffline);
-        }
-    }
-    //will automatically change the state to Online aft heartbeat received
-}
-
-//判断是否有令牌，有=true
-//disable                   = 0x0000000000000001ULL,      //peer禁用
-//onlinewithToken           = 0x0000000000000002ULL,      //peer在线有令牌，主站
-//onlinewithoutToken        = 0x0000000000000004ULL,      //peer在线无令牌，从站
-//tokenTakeOutPending       = 0x0000000000000008ULL,      //该peer主动把令牌给其他peer，但其他peer还未确认。该peer具有令牌，主站。
-//tokenOrderOutPending      = 0x0000000000000010ULL,      //其他peer要求该peer的令牌，该peer还未确认。该peer具有令牌，主站。
-//tokenTakeInPending        = 0x0000000000000020ULL,      //该peer主动要获得令牌，但令牌持有peer还未确认。该peer无令牌，从站。
-//tokenOrderInPending       = 0x0000000000000040ULL,      //令牌持有peer要求把令牌传送给该peer，但该peer还未确认。该peer无令牌，从站。
-//offline                   = 0x0000000000000080ULL,      //peer离线。此状态不适用于本站，用于判断其他peer的掉线状态。
-bool tmPeer::isWithToken(){
-    if ( getState() == stateOnlinewithToken ||
-            getState() == stateTokenTakeOutPending ||
-                getState() == stateTokenOrderOutPending   )
+/*
+ * 检查密码
+ * 输入参数：
+ * 1、testPswd 测试密码
+ * 返回数值：
+ * 1、正确返回ture，否则返回false
+ * 功能描述：
+ */
+bool UsrInfo::passWordCheck(const QString& testPswd){
+    QString temp = testPswd+_salt;
+    QByteArray res = QCryptographicHash::hash(temp.toLatin1(), QCryptographicHash::Sha256);
+    if(res == _pswd ){
         return true;
-    else return false;
-}
-bool tmPeer::stopCheckOffline(){
-    offlineCheckTimer.stop();
+    }
     return false;
 }
 
-int tmPeer::save(iLoadSaveProcessor* processor){
+/*
+ * 修改用户名
+ * 输入参数：
+ * 1、newName 新用户名
+ * 2、testPswd 测试密码
+ * 返回数值：
+ * 1、成功返回ture，否则返回false
+ * 功能描述：
+ */
+bool UsrInfo::setName(const QString& newName, const QString& testPswd){
+    if(passWordCheck(testPswd)){
+        _name = newName;
+        return true;
+    }
+    return false;
+}
 
-    processor->saveParameters( QString("peerIp"), QString::number(peerIp) );
-    processor->saveParameters( QString("priority"), QString::number(priority) );
+/*
+ * 修改等级
+ * 输入参数：
+ * 1、newLevel 新用户等级
+ * 2、testPswd 测试密码
+ * 返回数值：
+ * 1、成功返回ture，否则返回false
+ * 功能描述：
+ */
+bool UsrInfo::setLevel(const quint8& newLevel, const QString& testPswd){
+    if(passWordCheck(testPswd)){
+        _level = newLevel;
+        return true;
+    }
+    return false;
+}
 
-    processor->saveParameters( QString("offlineDelay"), QString::number(offlineDelay) );
-    processor->saveParameters( QString("offlineCheckInterv"), QString::number(offlineCheckInterv) );
+/*
+ * 修改密码
+ * 输入参数：
+ * 1、newPswd 新用户密码
+ * 2、oldPswd 旧密码
+ * 返回数值：
+ * 1、成功返回ture，否则返回false
+ * 功能描述：
+ * 1、检查密码，正确就换新密码
+ */
+bool UsrInfo::setPassWord(const QString& oldPswd, const QString& newPswd){
+    if(passWordCheck(oldPswd)){
+        QString temp = newPswd + _salt;
+        _pswd = QCryptographicHash::hash(temp.toLatin1(), QCryptographicHash::Sha256);
+        return true;
+    }
+    return false;
+}
 
-    baseDevice::save(processor);
+/*
+ * 保存参数
+ * 输入参数：
+ * 1、newPswd 新用户密码
+ * 2、oldPswd 旧密码
+ * 返回数值：
+ * 1、成功返回ture，否则返回false
+ * 功能描述：
+ * 1、检查密码，正确就换新密码
+ */
+int UsrInfo::save(iLoadSaveProcessor* processor){
+
+    processor->saveParameters( QString("usrName"), _name );
+    processor->saveParameters( QString("usrPassword"), QString( _pswd.toBase64() ) );
+    processor->saveParameters( QString("usrLevel"), QString::number(_level) );
     return 0;
 }
 
-int tmPeer::load(iLoadSaveProcessor* processor){
+int UsrInfo::load(iLoadSaveProcessor* processor){
     QString value;
     bool ok;
-    processor->loadParameters( QString("peerIp"), &value );
-    peerIp = value.toUInt(&ok, 10);
-    //qDebug()<<"tmPeer::load"<<ok;
-    processor->loadParameters( QString("priority"), &value );
-    priority = value.toInt(&ok, 10);
-    processor->loadParameters( QString("offlineDelay"), &value );
-    offlineDelay = value.toInt(&ok, 10);
-    processor->loadParameters( QString("offlineCheckInterv"), &value );
-    offlineCheckInterv = value.toInt(&ok, 10);
-
-    baseDevice::load(processor);
+    processor->loadParameters( QString("usrName"), &_name );
+    processor->loadParameters( QString("usrPassword"), &value );
+    _pswd = QByteArray::fromBase64( value.toLatin1() );
+    processor->loadParameters( QString("usrLevel"), &value );
+    _level = value.toUShort(&ok, 10);
     return 0;
 }
