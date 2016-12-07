@@ -50,6 +50,8 @@ public:
     virtual bool deleteUsr(const QString& name);
     //获得用户列表
     virtual QList<UsrInfo*> getUsrList();
+    //获取用户
+    virtual UsrInfo* getUsr(const QString& name);
 
 signals:
     void msgCurrentUsrChanged();

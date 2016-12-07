@@ -15,6 +15,8 @@ public:
     virtual bool deleteUsr(const QString& name) = 0;
     //获得用户列表
     virtual QList<UsrInfo*> getUsrList() = 0;
+    //获取用户
+    virtual UsrInfo* getUsr(const QString& name)=0;
 };
 #endif // IUSRMANAGE
 

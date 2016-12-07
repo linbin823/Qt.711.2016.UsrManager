@@ -267,6 +267,55 @@ QList<UsrInfo *> UsrManager::getUsrList(){
 }
 
 /*
+ * 获得用户
+ * 输入参数：
+ * 1、用户名
+ * 返回数值：
+ * 1、用户指针
+ * 功能描述：
+ * 1、找不到返回0
+ */
+UsrInfo* getUsr(const QString& name){
+    QListIterator<UsrInfo*> it(_usrList);
+    UsrInfo* temp;
+    it.toFront();
+    while(it.hasNext()){
+        temp = it.next();
+        if(temp->getName() == name ){
+            //用户名匹配
+            return temp;
+        }
+    }
+    return nullptr;
+}
+
+/*
+ * 获得用户列表
+ * 输入参数：无
+ * 返回数值：
+ * 1、等于或低于当前登录等级的所有用户的集合
+ * 功能描述：
+ * 1、返回用户列表
+ * 2、anonymous用户不存在于_usrList列表中。所以不会看到anonymous用户
+ */
+QList<UsrInfo *> UsrManager::getUsrList(){
+    QList<UsrInfo*> ret;
+    QListIterator<UsrInfo*> it(_usrList);
+    UsrInfo* temp;
+    quint8 currentLevel;
+    getNameAndLevel( 0, &currentLevel);
+
+    it.toFront();
+    while(it.hasNext()){
+        temp = it.next();
+        if( temp->getLevel() <= currentLevel ){
+            ret<<temp;
+        }
+    }
+    return ret;
+}
+
+/*
  * 检查是否登录成功
  * 输入参数：无
  * 返回数值：
