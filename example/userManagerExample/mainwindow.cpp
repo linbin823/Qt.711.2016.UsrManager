@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    _manager = UsrManager::getUsrManager();
+    _manager = UsrManager::Instance();
     _model   = new QStandardItemModel(this);
 
     connect(_manager,SIGNAL(msgUsrListChanged()),this,SLOT(refreshData()));

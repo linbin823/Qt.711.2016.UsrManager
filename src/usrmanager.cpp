@@ -6,7 +6,7 @@
 #include "loadsaveprocessorjson.h"
 UsrManager* UsrManager::_singleton = nullptr;
 
-UsrManager* UsrManager::getUsrManager(){
+UsrManager* UsrManager::Instance(){
     if(_singleton == nullptr){
         _singleton = new UsrManager();
     }
@@ -114,11 +114,13 @@ bool UsrManager::setAutoLogOut(bool en, int durationSec){
             //登录成功，则要重启定时器
             _autoLogOutTimer.start( _autoLogOutSec * 60 * 1000 );
         }
+        save();
         return true;
     }
     else if(!en){
         _autoLogOutEn = en;
         _autoLogOutTimer.stop();
+        save();
         return true;
     }
     else{
@@ -200,6 +202,7 @@ bool UsrManager::addUsr(const QString& name, const QString& pswd, const quint8& 
     ret = pTemp->setLevel(level, "");
     ret = pTemp->setPassWord( "", pswd);
     _usrList.append(pTemp);
+    save();
     emit msgUsrListChanged();
     return true;
 }
@@ -232,6 +235,7 @@ bool UsrManager::deleteUsr(const QString& name){
 
             _usrList.removeOne( temp );
             delete temp;
+            save();
             emit msgUsrListChanged();
             emit msgCurrentUsrChanged();
             return true;
@@ -275,7 +279,7 @@ QList<UsrInfo *> UsrManager::getUsrList(){
  * 功能描述：
  * 1、找不到返回0
  */
-UsrInfo* getUsr(const QString& name){
+UsrInfo* UsrManager::getUsr(const QString& name){
     QListIterator<UsrInfo*> it(_usrList);
     UsrInfo* temp;
     it.toFront();
@@ -287,32 +291,6 @@ UsrInfo* getUsr(const QString& name){
         }
     }
     return nullptr;
-}
-
-/*
- * 获得用户列表
- * 输入参数：无
- * 返回数值：
- * 1、等于或低于当前登录等级的所有用户的集合
- * 功能描述：
- * 1、返回用户列表
- * 2、anonymous用户不存在于_usrList列表中。所以不会看到anonymous用户
- */
-QList<UsrInfo *> UsrManager::getUsrList(){
-    QList<UsrInfo*> ret;
-    QListIterator<UsrInfo*> it(_usrList);
-    UsrInfo* temp;
-    quint8 currentLevel;
-    getNameAndLevel( 0, &currentLevel);
-
-    it.toFront();
-    while(it.hasNext()){
-        temp = it.next();
-        if( temp->getLevel() <= currentLevel ){
-            ret<<temp;
-        }
-    }
-    return ret;
 }
 
 /*

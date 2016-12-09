@@ -20,7 +20,7 @@ private:
     static UsrManager* _singleton;
 
 public:
-    static UsrManager* getUsrManager();
+    static UsrManager* Instance();
 
     ~UsrManager();
     //等级设计
