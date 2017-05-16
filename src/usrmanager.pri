@@ -16,4 +16,4 @@ DISTFILES += \
     $$PWD/../HISTORY.txt \
     $$PWD/../README.txt
 
-include($$PWD/../lib/saveLoadProcessor/src/loadsaveProcessor.pri)
+include($$PWD/../lib/loadSaveProcessor/src/loadsaveProcessor.pri)

@@ -133,21 +133,20 @@ bool UsrInfo::setPassWord(const QString& oldPswd, const QString& newPswd){
  * 功能描述：
  * 1、检查密码，正确就换新密码
  */
-int UsrInfo::save(iLoadSaveProcessor* processor){
+void UsrInfo::save(iLoadSaveProcessor* processor){
 
-    processor->saveParameters( QString("usrName"), _name );
-    processor->saveParameters( QString("usrPassword"), QString( _pswd.toBase64() ) );
-    processor->saveParameters( QString("usrLevel"), QString::number(_level) );
-    return 0;
+    processor->writeValue( QString("usrName"), _name );
+    QString value = _pswd.toBase64();
+    processor->writeValue( QString("usrPassword"), value );
+    processor->writeValue( QString("usrLevel"), _level );
 }
 
-int UsrInfo::load(iLoadSaveProcessor* processor){
+void UsrInfo::load(iLoadSaveProcessor* processor){
     QString value;
     bool ok;
-    processor->loadParameters( QString("usrName"), &_name );
-    processor->loadParameters( QString("usrPassword"), &value );
+    processor->readValue( QString("usrName"), _name );
+    processor->readValue( QString("usrPassword"), value );
     _pswd = QByteArray::fromBase64( value.toLatin1() );
-    processor->loadParameters( QString("usrLevel"), &value );
+    processor->readValue( QString("usrLevel"), value );
     _level = value.toUShort(&ok, 10);
-    return 0;
 }

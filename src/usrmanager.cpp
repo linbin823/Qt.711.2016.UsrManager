@@ -350,27 +350,16 @@ int UsrManager::load(){
     _processor->setPassWord("usr_for_joystick");
 
 
-    ret = _processor->transactionStart();
-    if(ret !=0 ){
-        insetLevelSuperior();
-        _processor->transactionEnd();
-        delete _processor;
-        return -1;
-    }
     ret = _processor->loadFile("usr._x");
     if(ret !=0 ){
         insetLevelSuperior();
-        _processor->transactionEnd();
         delete _processor;
         return -1;
     }
-    _processor->loadParameters("autoLogOutEn",&paraValue);
-    _autoLogOutEn = paraValue.toInt();
-    _processor->loadParameters("autoLogOutSec",&paraValue);
-    _autoLogOutSec = paraValue.toInt();
-
-    _processor->loadParameters("usrCounts",&paraValue);
-    int count = paraValue.toInt();
+    _processor->readValue("autoLogOutEn",_autoLogOutEn);
+    _processor->readValue("autoLogOutSec",_autoLogOutSec);
+    int count;
+    _processor->readValue("usrCounts",count);
     for(int i=0; i<count; i++){
         //load的时候要检查用户名是否重复，重复的话要丢弃
 
@@ -385,7 +374,6 @@ int UsrManager::load(){
         }
         _usrList.append(usr);
     }
-    _processor->transactionEnd();
     delete _processor;
     return 0;
 }
@@ -398,16 +386,10 @@ int UsrManager::save(){
     _processor = new loadSaveProcessorJson(this, true);
     _processor->setPassWord("usr_for_joystick");
 
-
-    ret =  _processor->transactionStart();
-    if(ret !=0 ){
-        _processor->transactionEnd();
-        delete _processor;
-        return -1;
-    }
-    _processor->saveParameters("autoLogOutEn", QString::number(_autoLogOutEn));
-    _processor->saveParameters("autoLogOutSec",QString::number(_autoLogOutSec));
-    _processor->saveParameters("usrCounts",QString::number(_usrList.size()));
+    _processor->writeValue("autoLogOutEn", _autoLogOutEn);
+    _processor->writeValue("autoLogOutSec",_autoLogOutSec);
+    int size = _usrList.size();
+    _processor->writeValue("usrCounts",    size);
 
     for(int i=0; i<_usrList.size(); i++){
         _processor->moveToInstance("usrInfo", QString::number(i));
@@ -417,11 +399,9 @@ int UsrManager::save(){
 
     ret =  _processor->saveFile("usr._x");
     if(ret !=0 ){
-        _processor->transactionEnd();
         delete _processor;
         return -1;
     }
-    _processor->transactionEnd();
     delete _processor;
     return 0;
 }

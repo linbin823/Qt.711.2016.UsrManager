@@ -11,8 +11,8 @@ class UsrInfo : public iLoadSave
 public:
     explicit UsrInfo();
     ~UsrInfo();
-    virtual int save(iLoadSaveProcessor* processor);
-    virtual int load(iLoadSaveProcessor* processor);
+    virtual void save(iLoadSaveProcessor* processor);
+    virtual void load(iLoadSaveProcessor* processor);
     //查询名称
     QString getName(void) const;
     //查询等级
